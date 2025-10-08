@@ -112,7 +112,13 @@ Analyze the advisor's performance comprehensively and return a JSON object with 
   ],
   "strengths": ["<strength 1 IN ${language}>", "<strength 2 IN ${language}>", ...],
   "improvements": ["<improvement 1 IN ${language}>", "<improvement 2 IN ${language}>", ...],
-  "summary": "<comprehensive performance summary IN ${language}>"
+  "summary": "<comprehensive performance summary IN ${language}>",
+  "penalties": {
+    "offTopicResponses": <number of times advisor answered off-topic>,
+    "tooShortResponses": <number of times advisor gave insufficient answers>,
+    "unprofessionalLanguage": <number of times advisor used impolite words>,
+    "totalPenaltyPoints": <total points deducted>
+  }
 }
 
 Evaluation Guidelines:
@@ -122,6 +128,13 @@ Evaluation Guidelines:
 4. PERFORMANCE CATEGORIES: Evaluate across the six areas listed above.
 5. STRENGTHS & IMPROVEMENTS: Identify 3-4 key strengths and 3-4 areas for improvement.
 6. OVERALL SUMMARY: Provide a comprehensive summary of the advisor's performance.
+
+PENALTY SCORING - Deduct points for the following issues:
+1. OFF-TOPIC RESPONSES (ตอบไม่ตรงคำถาม): Deduct 5-10 points each time the advisor's answer doesn't directly address the client's question or concern. The response must be relevant to what the client asked.
+2. TOO SHORT RESPONSES (ตอบสั้นเกินไป): Deduct 3-7 points for responses that are too brief (less than 2-3 sentences) or lack sufficient detail to be helpful. Advisors should provide adequate explanations.
+3. UNPROFESSIONAL LANGUAGE (ใช้คำไม่สุภาพ): Deduct 10-15 points for any use of impolite, rude, or unprofessional language. All communication must be respectful and courteous.
+
+Calculate the overall score by starting at 100 and deducting penalty points. Also factor in the category scores. The final overallScore should reflect both positive performance and penalties applied.
 
 Be constructive, specific, and actionable in your feedback. Remember: ALL text content must be in ${language}.`
 

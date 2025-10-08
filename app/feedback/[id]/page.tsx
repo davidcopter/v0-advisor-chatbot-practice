@@ -30,6 +30,12 @@ interface FeedbackData {
   strengths: string[]
   improvements: string[]
   summary: string
+  penalties?: {
+    offTopicResponses: number
+    tooShortResponses: number
+    unprofessionalLanguage: number
+    totalPenaltyPoints: number
+  }
 }
 
 export default function FeedbackPage() {
@@ -138,6 +144,45 @@ export default function FeedbackPage() {
           <h2 className="mb-4 font-sans text-xl font-semibold text-card-foreground">Conversation Summary</h2>
           <p className="leading-relaxed text-muted-foreground">{feedback.conversationSummary}</p>
         </Card>
+
+        {feedback.penalties && feedback.penalties.totalPenaltyPoints > 0 && (
+          <Card className="mb-8 border-red-200 bg-red-50 p-6">
+            <h2 className="mb-4 font-sans text-xl font-semibold text-red-700">Penalties Applied</h2>
+            <div className="mb-4">
+              <p className="text-sm text-red-600">
+                Total penalty points deducted:{" "}
+                <span className="font-bold">{feedback.penalties.totalPenaltyPoints}</span>
+              </p>
+            </div>
+            <div className="space-y-2 text-sm">
+              {feedback.penalties.offTopicResponses > 0 && (
+                <div className="flex items-start gap-2">
+                  <span className="font-medium text-red-700">Off-Topic Responses:</span>
+                  <span className="text-red-600">
+                    {feedback.penalties.offTopicResponses} instance(s) - Answers didn't directly address client
+                    questions
+                  </span>
+                </div>
+              )}
+              {feedback.penalties.tooShortResponses > 0 && (
+                <div className="flex items-start gap-2">
+                  <span className="font-medium text-red-700">Too Short Responses:</span>
+                  <span className="text-red-600">
+                    {feedback.penalties.tooShortResponses} instance(s) - Responses lacked sufficient detail
+                  </span>
+                </div>
+              )}
+              {feedback.penalties.unprofessionalLanguage > 0 && (
+                <div className="flex items-start gap-2">
+                  <span className="font-medium text-red-700">Unprofessional Language:</span>
+                  <span className="text-red-600">
+                    {feedback.penalties.unprofessionalLanguage} instance(s) - Impolite or unprofessional words detected
+                  </span>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
 
         <div className="mb-8 grid gap-6 md:grid-cols-2">
           <Card className="p-6">

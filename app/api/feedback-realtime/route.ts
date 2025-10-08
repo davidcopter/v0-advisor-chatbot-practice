@@ -17,7 +17,8 @@ export async function POST(req: Request) {
 
     const { userMessage, assistantMessage, conversationHistory, persona } = await req.json()
 
-    // Create a prompt to analyze the advisor's message
+    const language = persona.language || "English"
+
     const analysisPrompt = `You are an expert financial advisory coach evaluating an advisor's communication with a client.
 
 CLIENT PROFILE:
@@ -29,6 +30,7 @@ CLIENT PROFILE:
 - Assets: ${persona.assets}
 - Risk Tolerance: ${persona.risk}
 - Profile: ${persona.lifestyle}
+- Language Preference: ${language}
 
 ADVISOR'S MESSAGE:
 "${userMessage}"
@@ -36,12 +38,20 @@ ADVISOR'S MESSAGE:
 CLIENT'S RESPONSE:
 "${assistantMessage}"
 
+IMPORTANT: Provide ALL feedback content in ${language}. All text including strengths, improvements, and recommendations MUST be in ${language}.
+
 Analyze the advisor's message and provide feedback in the following JSON format:
 {
   "score": <number 0-100>,
-  "strengths": [<array of 1-3 specific strengths>],
-  "improvements": [<array of 1-3 specific areas to improve>],
-  "recommendation": "<one specific actionable recommendation for the next message>"
+  "strengths": [<array of 1-3 specific strengths IN ${language}>],
+  "improvements": [<array of 1-3 specific areas to improve IN ${language}>],
+  "recommendation": "<one specific actionable recommendation for the next message IN ${language}>",
+  "penalties": {
+    "offTopic": <boolean - true if answer doesn't match the question>,
+    "tooShort": <boolean - true if answer is too brief>,
+    "unprofessional": <boolean - true if impolite language was used>,
+    "penaltyPoints": <total points deducted 0-30>
+  }
 }
 
 Evaluate based on:
@@ -52,15 +62,19 @@ Evaluate based on:
 5. Professional tone and confidence
 6. Addressing client concerns appropriately
 
-Be specific and constructive. Focus on what the advisor did well and what they could improve.`
+PENALTY CRITERIA - Apply penalties for:
+1. OFF-TOPIC RESPONSE (ตอบไม่ตรงคำถาม): Deduct 5-10 points if the advisor's answer doesn't directly address what the client asked or is irrelevant to their concern.
+2. TOO SHORT RESPONSE (ตอบสั้นเกินไป): Deduct 3-7 points if the response is too brief (less than 2-3 sentences) or lacks sufficient detail to be helpful.
+3. UNPROFESSIONAL LANGUAGE (ใช้คำไม่สุภาพ): Deduct 10-15 points if any impolite, rude, or unprofessional language is used.
+
+Calculate the score by starting at 100, adding points for strengths, and deducting penalty points for violations. Be specific and constructive. ALL feedback text must be in ${language}.`
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content:
-            "You are an expert financial advisory coach. Provide constructive, specific feedback in valid JSON format only.",
+          content: `You are an expert financial advisory coach. Provide constructive, specific feedback in valid JSON format only. ALL text content in your response MUST be in ${language}.`,
         },
         {
           role: "user",
@@ -81,6 +95,12 @@ Be specific and constructive. Focus on what the advisor did well and what they c
           strengths: feedback.strengths || [],
           improvements: feedback.improvements || [],
           recommendation: feedback.recommendation || "Continue building rapport with the client.",
+          penalties: feedback.penalties || {
+            offTopic: false,
+            tooShort: false,
+            unprofessional: false,
+            penaltyPoints: 0,
+          },
         },
       }),
       {

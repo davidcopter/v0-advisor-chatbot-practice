@@ -144,15 +144,61 @@ Remember: You are ${persona.name}, a real person seeking financial advice, not a
         try {
           console.log("[v0] Starting stream processing")
           let chunkCount = 0
+          let fullResponse = ""
+
           for await (const chunk of stream) {
             chunkCount++
             const content = chunk.choices[0]?.delta?.content || ""
             if (content) {
+              fullResponse += content
               const data = `0:${JSON.stringify(content)}\n`
               controller.enqueue(encoder.encode(data))
             }
           }
           console.log("[v0] Stream completed. Total chunks:", chunkCount)
+
+          try {
+            console.log("[v0] Analyzing customer emotion")
+            const emotionAnalysis = await openai.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: [
+                {
+                  role: "system",
+                  content: `Analyze the emotional tone of the customer's message and respond with ONLY a single emoji that best represents their feeling. Choose from:
+😊 - Happy, satisfied, pleased
+😃 - Excited, enthusiastic
+😌 - Calm, content, reassured
+🤔 - Curious, thinking, considering
+😕 - Confused, uncertain
+😟 - Worried, concerned, anxious
+😤 - Frustrated, annoyed
+😠 - Angry, upset
+😰 - Stressed, nervous, fearful
+🙂 - Neutral, polite
+😐 - Indifferent, unimpressed
+
+Respond with ONLY the emoji, nothing else.`,
+                },
+                {
+                  role: "user",
+                  content: `Customer's message: "${fullResponse}"`,
+                },
+              ],
+              temperature: 0.3,
+              max_tokens: 10,
+            })
+
+            const emoji = emotionAnalysis.choices[0]?.message?.content?.trim() || "🙂"
+            console.log("[v0] Detected emotion emoji:", emoji)
+            const emojiData = `emoji:${JSON.stringify(emoji)}\n`
+            controller.enqueue(encoder.encode(emojiData))
+          } catch (emotionError: any) {
+            console.error("[v0] Failed to analyze emotion:", emotionError)
+            // Send default emoji if analysis fails
+            const defaultEmoji = `emoji:${JSON.stringify("🙂")}\n`
+            controller.enqueue(encoder.encode(defaultEmoji))
+          }
+
           controller.close()
         } catch (error: any) {
           console.error("[v0] Stream error:", error)

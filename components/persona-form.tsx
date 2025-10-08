@@ -209,6 +209,7 @@ export function PersonaForm() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Thai">Thai (ไทย)</SelectItem>
                     <SelectItem value="Spanish">Spanish</SelectItem>
                     <SelectItem value="French">French</SelectItem>
                     <SelectItem value="German">German</SelectItem>

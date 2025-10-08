@@ -4,7 +4,7 @@ import type React from "react"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Send, StopCircle, ThumbsUp, ThumbsDown, Lightbulb } from "lucide-react"
+import { Send, StopCircle, ThumbsUp, ThumbsDown, Lightbulb, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
@@ -30,6 +30,12 @@ interface MessageFeedback {
   strengths: string[]
   improvements: string[]
   recommendation: string
+  penalties?: {
+    offTopic: boolean
+    tooShort: boolean
+    unprofessional: boolean
+    penaltyPoints: number
+  }
 }
 
 interface Message {
@@ -37,6 +43,7 @@ interface Message {
   role: "user" | "assistant"
   content: string
   feedback?: MessageFeedback
+  emoji?: string
 }
 
 export function ChatInterface({ persona }: ChatInterfaceProps) {
@@ -44,6 +51,7 @@ export function ChatInterface({ persona }: ChatInterfaceProps) {
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isEndingChat, setIsEndingChat] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
@@ -75,6 +83,7 @@ export function ChatInterface({ persona }: ChatInterfaceProps) {
       id: (Date.now() + 1).toString(),
       role: "assistant",
       content: "",
+      emoji: "",
     }
 
     setMessages((prev) => [...prev, assistantMessage])
@@ -140,6 +149,7 @@ export function ChatInterface({ persona }: ChatInterfaceProps) {
 
       console.log("[v0] Starting to read stream")
       let accumulatedContent = ""
+      let customerEmoji = ""
       let chunkCount = 0
 
       while (true) {
@@ -164,11 +174,21 @@ export function ChatInterface({ persona }: ChatInterfaceProps) {
             } catch (e) {
               console.warn("[v0] Failed to parse chunk:", line)
             }
+          } else if (line.startsWith("emoji:")) {
+            try {
+              customerEmoji = JSON.parse(line.slice(6))
+              setMessages((prev) =>
+                prev.map((m) => (m.id === assistantMessage.id ? { ...m, emoji: customerEmoji } : m)),
+              )
+            } catch (e) {
+              console.warn("[v0] Failed to parse emoji:", line)
+            }
           }
         }
       }
 
       console.log("[v0] Accumulated content length:", accumulatedContent.length)
+      console.log("[v0] Customer emoji:", customerEmoji)
 
       try {
         console.log("[v0] Requesting feedback for message")
@@ -193,7 +213,6 @@ export function ChatInterface({ persona }: ChatInterfaceProps) {
         if (feedbackResponse.ok) {
           const feedbackData = await feedbackResponse.json()
           console.log("[v0] Feedback received:", feedbackData)
-          // Add feedback to the user's message
           setMessages((prev) =>
             prev.map((m) => (m.id === userMessage.id ? { ...m, feedback: feedbackData.feedback } : m)),
           )
@@ -231,7 +250,7 @@ export function ChatInterface({ persona }: ChatInterfaceProps) {
   }
 
   const handleEndChat = () => {
-    // Store conversation for feedback
+    setIsEndingChat(true)
     const conversationData = {
       personaId: persona.id,
       personaName: persona.name,
@@ -294,6 +313,14 @@ export function ChatInterface({ persona }: ChatInterfaceProps) {
                         : "bg-card border border-border text-card-foreground"
                     }`}
                   >
+                    {message.role === "assistant" && message.emoji && (
+                      <div className="mb-2 flex items-center gap-2 border-b border-border pb-2">
+                        <span className="text-2xl" role="img" aria-label="customer emotion">
+                          {message.emoji}
+                        </span>
+                        <span className="text-xs text-muted-foreground">Customer's feeling</span>
+                      </div>
+                    )}
                     <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
                   </div>
                 </div>
@@ -307,6 +334,23 @@ export function ChatInterface({ persona }: ChatInterfaceProps) {
                           Feedback - Score: {message.feedback.score}%
                         </span>
                       </div>
+
+                      {message.feedback.penalties && message.feedback.penalties.penaltyPoints > 0 && (
+                        <div className="mb-3 rounded border border-red-200 bg-red-50 p-2">
+                          <div className="mb-1 text-xs font-semibold text-red-700">
+                            Penalties Applied (-{message.feedback.penalties.penaltyPoints} points):
+                          </div>
+                          <ul className="ml-4 space-y-0.5 text-xs text-red-600">
+                            {message.feedback.penalties.offTopic && (
+                              <li>• Response didn't directly address the question</li>
+                            )}
+                            {message.feedback.penalties.tooShort && <li>• Response was too brief or lacked detail</li>}
+                            {message.feedback.penalties.unprofessional && (
+                              <li>• Unprofessional or impolite language detected</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
 
                       {message.feedback.strengths.length > 0 && (
                         <div className="mb-2">
@@ -387,8 +431,15 @@ export function ChatInterface({ persona }: ChatInterfaceProps) {
           </form>
           {messages.length > 2 && (
             <div className="mt-3 flex justify-center">
-              <Button variant="outline" onClick={handleEndChat}>
-                End Chat & Get Overall Feedback
+              <Button variant="outline" onClick={handleEndChat} disabled={isEndingChat || isLoading}>
+                {isEndingChat ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading Feedback...
+                  </>
+                ) : (
+                  "End Chat & Get Overall Feedback"
+                )}
               </Button>
             </div>
           )}
