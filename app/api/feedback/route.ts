@@ -36,6 +36,9 @@ export async function POST(req: Request) {
 
     const { conversation } = await req.json()
 
+    const language = conversation.persona?.language || "English"
+    console.log("[v0] Generating feedback in language:", language)
+
     const conversationText = conversation.messages
       .map((msg: any) => {
         const role = msg.role === "user" ? "Advisor" : "Client"
@@ -52,62 +55,64 @@ ${conversation.persona ? JSON.stringify(conversation.persona, null, 2) : ""}
 CONVERSATION TRANSCRIPT:
 ${conversationText}
 
+IMPORTANT: Provide ALL feedback, analysis, and text content in ${language}. All field values including conversationSummary, feedback, strengths, improvements, and summary MUST be written in ${language}.
+
 Analyze the advisor's performance comprehensively and return a JSON object with the following structure:
 
 {
   "overallScore": <number 0-100>,
-  "conversationSummary": "<brief summary of conversation flow and key topics>",
+  "conversationSummary": "<brief summary of conversation flow and key topics IN ${language}>",
   "conversationTone": {
-    "advisorTone": "<description of advisor's tone>",
-    "clientTone": "<description of client's tone and engagement>",
-    "overall": "<overall tone assessment>"
+    "advisorTone": "<description of advisor's tone IN ${language}>",
+    "clientTone": "<description of client's tone and engagement IN ${language}>",
+    "overall": "<overall tone assessment IN ${language}>"
   },
   "customerSatisfaction": {
     "score": <number 0-100>,
-    "indicators": ["<indicator 1>", "<indicator 2>", ...],
-    "assessment": "<overall satisfaction assessment>"
+    "indicators": ["<indicator 1 IN ${language}>", "<indicator 2 IN ${language}>", ...],
+    "assessment": "<overall satisfaction assessment IN ${language}>"
   },
   "categories": [
     {
       "name": "Rapport Building",
       "score": <number 0-100>,
-      "feedback": "<detailed feedback>",
+      "feedback": "<detailed feedback IN ${language}>",
       "trend": "up|down|neutral"
     },
     {
       "name": "Active Listening",
       "score": <number 0-100>,
-      "feedback": "<detailed feedback>",
+      "feedback": "<detailed feedback IN ${language}>",
       "trend": "up|down|neutral"
     },
     {
       "name": "Needs Assessment",
       "score": <number 0-100>,
-      "feedback": "<detailed feedback>",
+      "feedback": "<detailed feedback IN ${language}>",
       "trend": "up|down|neutral"
     },
     {
       "name": "Product Knowledge",
       "score": <number 0-100>,
-      "feedback": "<detailed feedback>",
+      "feedback": "<detailed feedback IN ${language}>",
       "trend": "up|down|neutral"
     },
     {
       "name": "Communication Clarity",
       "score": <number 0-100>,
-      "feedback": "<detailed feedback>",
+      "feedback": "<detailed feedback IN ${language}>",
       "trend": "up|down|neutral"
     },
     {
       "name": "Objection Handling",
       "score": <number 0-100>,
-      "feedback": "<detailed feedback>",
+      "feedback": "<detailed feedback IN ${language}>",
       "trend": "up|down|neutral"
     }
   ],
-  "strengths": ["<strength 1>", "<strength 2>", ...],
-  "improvements": ["<improvement 1>", "<improvement 2>", ...],
-  "summary": "<comprehensive performance summary>"
+  "strengths": ["<strength 1 IN ${language}>", "<strength 2 IN ${language}>", ...],
+  "improvements": ["<improvement 1 IN ${language}>", "<improvement 2 IN ${language}>", ...],
+  "summary": "<comprehensive performance summary IN ${language}>"
 }
 
 Evaluation Guidelines:
@@ -118,7 +123,7 @@ Evaluation Guidelines:
 5. STRENGTHS & IMPROVEMENTS: Identify 3-4 key strengths and 3-4 areas for improvement.
 6. OVERALL SUMMARY: Provide a comprehensive summary of the advisor's performance.
 
-Be constructive, specific, and actionable in your feedback.`
+Be constructive, specific, and actionable in your feedback. Remember: ALL text content must be in ${language}.`
 
     console.log("[v0] Calling OpenAI API for feedback generation")
 
@@ -127,7 +132,7 @@ Be constructive, specific, and actionable in your feedback.`
       messages: [
         {
           role: "system",
-          content: "You are an expert financial advisory coach. Always respond with valid JSON only.",
+          content: `You are an expert financial advisory coach. Always respond with valid JSON only. ALL text content in your response MUST be in ${language}, including all feedback, summaries, and descriptions.`,
         },
         {
           role: "user",
