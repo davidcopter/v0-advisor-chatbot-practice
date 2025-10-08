@@ -15,6 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 const CELEBRITY_PERSONAS = [
   {
     name: "Tech Entrepreneur",
+    gender: "Male",
+    age: "38",
     occupation: "Software Company CEO",
     income: "$500,000",
     assets: "$2,500,000",
@@ -23,6 +25,8 @@ const CELEBRITY_PERSONAS = [
   },
   {
     name: "Retired Teacher",
+    gender: "Female",
+    age: "67",
     occupation: "Retired Educator",
     income: "$45,000",
     assets: "$800,000",
@@ -31,6 +35,8 @@ const CELEBRITY_PERSONAS = [
   },
   {
     name: "Young Professional",
+    gender: "Female",
+    age: "29",
     occupation: "Marketing Manager",
     income: "$85,000",
     assets: "$150,000",
@@ -44,6 +50,8 @@ export function PersonaForm() {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
+    gender: "",
+    age: "",
     occupation: "",
     income: "",
     assets: "",
@@ -74,6 +82,8 @@ export function PersonaForm() {
     setFormData({
       ...formData,
       name: persona.name,
+      gender: persona.gender,
+      age: persona.age,
       occupation: persona.occupation,
       income: persona.income,
       assets: persona.assets,
@@ -101,6 +111,39 @@ export function PersonaForm() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value) => setFormData({ ...formData, gender: value })}
+                  required
+                >
+                  <SelectTrigger id="gender">
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Non-binary">Non-binary</SelectItem>
+                    <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="age">Age</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  placeholder="35"
+                  value={formData.age}
+                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                  required
+                  min="18"
+                  max="100"
                 />
               </div>
 
@@ -204,6 +247,12 @@ export function PersonaForm() {
               >
                 <h3 className="mb-2 font-sans text-lg font-semibold text-card-foreground">{persona.name}</h3>
                 <div className="mb-3 grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
+                  <div>
+                    <span className="font-medium">Gender:</span> {persona.gender}
+                  </div>
+                  <div>
+                    <span className="font-medium">Age:</span> {persona.age}
+                  </div>
                   <div>
                     <span className="font-medium">Occupation:</span> {persona.occupation}
                   </div>
