@@ -10,6 +10,17 @@ import Link from "next/link"
 
 interface FeedbackData {
   overallScore: number
+  conversationSummary: string
+  conversationTone: {
+    advisorTone: string
+    clientTone: string
+    overall: string
+  }
+  customerSatisfaction: {
+    score: number
+    indicators: string[]
+    assessment: string
+  }
   categories: {
     name: string
     score: number
@@ -124,7 +135,60 @@ export default function FeedbackPage() {
         </div>
 
         <Card className="mb-8 p-6">
-          <h2 className="mb-4 font-sans text-xl font-semibold text-card-foreground">Overall Summary</h2>
+          <h2 className="mb-4 font-sans text-xl font-semibold text-card-foreground">Conversation Summary</h2>
+          <p className="leading-relaxed text-muted-foreground">{feedback.conversationSummary}</p>
+        </Card>
+
+        <div className="mb-8 grid gap-6 md:grid-cols-2">
+          <Card className="p-6">
+            <h3 className="mb-4 font-sans text-lg font-semibold text-card-foreground">Conversation Tone</h3>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="mb-1 font-medium text-foreground">Advisor Tone:</p>
+                <p className="leading-relaxed text-muted-foreground">{feedback.conversationTone.advisorTone}</p>
+              </div>
+              <div>
+                <p className="mb-1 font-medium text-foreground">Client Tone:</p>
+                <p className="leading-relaxed text-muted-foreground">{feedback.conversationTone.clientTone}</p>
+              </div>
+              <div>
+                <p className="mb-1 font-medium text-foreground">Overall:</p>
+                <p className="leading-relaxed text-muted-foreground">{feedback.conversationTone.overall}</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h3 className="mb-4 font-sans text-lg font-semibold text-card-foreground">Customer Satisfaction</h3>
+            <div className="mb-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">Satisfaction Score</span>
+                <span className={`font-sans text-2xl font-bold ${getScoreColor(feedback.customerSatisfaction.score)}`}>
+                  {feedback.customerSatisfaction.score}%
+                </span>
+              </div>
+              <Progress value={feedback.customerSatisfaction.score} className="mb-3 h-2" />
+              <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
+                {feedback.customerSatisfaction.assessment}
+              </p>
+              {feedback.customerSatisfaction.indicators.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-medium text-foreground">Key Indicators:</p>
+                  <ul className="space-y-1">
+                    {feedback.customerSatisfaction.indicators.map((indicator, idx) => (
+                      <li key={idx} className="text-xs leading-relaxed text-muted-foreground">
+                        • {indicator}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        <Card className="mb-8 p-6">
+          <h2 className="mb-4 font-sans text-xl font-semibold text-card-foreground">Overall Performance Summary</h2>
           <p className="leading-relaxed text-muted-foreground">{feedback.summary}</p>
         </Card>
 
