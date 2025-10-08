@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
     const { conversation } = await req.json()
 
-    const language = conversation.persona?.language || "English"
+    const language = conversation.persona?.language || "Thai"
     console.log("[v0] Generating feedback in language:", language)
 
     const conversationText = conversation.messages

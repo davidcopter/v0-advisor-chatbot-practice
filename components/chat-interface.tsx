@@ -252,6 +252,7 @@ export function ChatInterface({ persona }: ChatInterfaceProps) {
   const handleEndChat = () => {
     setIsEndingChat(true)
     const conversationData = {
+      language: persona.language,
       personaId: persona.id,
       personaName: persona.name,
       messages: messages,
